@@ -20,7 +20,7 @@ def mergeAudioFiles(fullAudioFile, addOnAudio, outputPath):
         return fullAudioFile
 
 
-def main():
+def main():    
     link = input('Enter the Youtube playlist you wish to download: ')
     if 'playlist' not in link:
         print('Only enter Youtube playlists, not regular videos or non-Youtube links! Try again!')
@@ -28,6 +28,7 @@ def main():
         p = Playlist(link)
         playlistTitle = str(p.title).replace(' ', '').replace('\'', '').replace('/', '') + '.mp3'
         outputPath = 'DownloadedMusic'
+        os.makedirs(outputPath, exist_ok=True)
                 
         print('\n', playlistTitle, '\n')
         
