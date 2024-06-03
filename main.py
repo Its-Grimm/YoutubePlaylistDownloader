@@ -36,9 +36,10 @@ def main():
         count = 1
         for video in p.videos:
             masterAudioFilePath = os.path.join(outputPath, playlistTitle)
+            print(count, '/', len(p), ': Downloading', video.title)
+            
             try:
                 audioFile = video.streams.filter(only_audio=True).first()
-                print(count, '/', len(p), ': Downloading', video.title)
                 
                 # Creates the master file 
                 if count == 1:
@@ -59,7 +60,6 @@ def main():
                     
                     
             except pytube.exceptions.AgeRestrictedError as e:
-                print(count, '/', len(p), ': Downloading', video.title)
                 print('Skipping', video.title, 'due to error:\"', e, '\"\n')
             
             count += 1
