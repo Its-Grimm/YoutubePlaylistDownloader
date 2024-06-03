@@ -3,6 +3,7 @@ import time
 import pytube
 import subprocess
 from pytube import Playlist
+import pytube.exceptions
 
 def downloadAudioFile(audioFile, outputPath, fileName):
     audioFile.download(output_path=outputPath, filename=fileName)
@@ -35,9 +36,8 @@ def main():
         count = 1
         for video in p.videos:
             masterAudioFilePath = os.path.join(outputPath, playlistTitle)
-            
-            audioFile = video.streams.filter(only_audio=True).first()
-            if audioFile:
+            try:
+                audioFile = video.streams.filter(only_audio=True).first()
                 print(count, '/', len(p), ': Downloading', video.title)
                 
                 # Creates the master file 
@@ -57,7 +57,13 @@ def main():
                     os.replace(mergedFile, masterAudioFilePath)
                     os.remove(addonFilePath)
                     
-                count += 1
+                    
+            except pytube.exceptions.AgeRestrictedError as e:
+                print(count, '/', len(p), ': Downloading', video.title)
+                print('Skipping', video.title, 'due to error:\"', e, '\"\n')
+            
+            count += 1
+                
             
         print('All files successfully downloaded and merged!\n')
 
