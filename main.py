@@ -60,7 +60,7 @@ def main():
                     
                     
             except pytube.exceptions.AgeRestrictedError as e:
-                print('Skipping', video.title, 'due to error:\"', e, '\"\n')
+                print('Skipping', video.title, 'due to error: \"', e, '\" \n')
             
             count += 1
                 
