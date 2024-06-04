@@ -10,9 +10,11 @@ def downloadAudioFile(audioFile, outputPath, fileName):
 
 
 def mergeAudioFiles(fullAudioFile, addOnAudio, outputPath):
-    mergedFile = os.path.join(outputPath, 'newFile.mp3')
+    mergedFile = os.path.join(outputPath, 'newFile.mp3') 
     try:
+        # Does not print ffmpeg output
         subprocess.run(['ffmpeg', '-i', fullAudioFile, '-i', addOnAudio, '-filter_complex', '[0:0][1:0]concat=n=2:v=0:a=1[out]', '-map', '[out]', mergedFile], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        # Prints ffmpeg output0
         # subprocess.run(['ffmpeg', '-i', fullAudioFile, '-i', addOnAudio, '-filter_complex', '[0:0][1:0]concat=n=2:v=0:a=1[out]', '-map', '[out]', mergedFile], check=True)
         print('Audio file merged successfully.\n')
         return mergedFile
