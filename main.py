@@ -96,6 +96,12 @@ def main():
                 
         except pytube.exceptions.AgeRestrictedError as e:
             print(f'Skipping {video.title} due to age restriction: "{e}"\n')
+        except pytube.exceptions.VideoRegionBlocked as e:
+            print(f'Skipping {video.title} due to video region blocked: "{e}"\n')
+        except pytube.exceptions.VideoPrivate as e:
+            print(f'Skipping {video.title} due to video privated: "{e}"\n')
+        except pytube.exceptions.VideoUnavailable as e:
+            print(f'Skipping {video.title} due to video unavailable: "{e}"\n')
         
         count += 1
         
