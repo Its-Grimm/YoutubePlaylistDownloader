@@ -34,41 +34,40 @@ def main():
             playlistTitle = str(p.title).replace(' ', '').replace('\'', '').replace('/', '') + '.mp3'
             outputPath = 'DownloadedMusic'
             os.makedirs(outputPath, exist_ok=True)
-                    
+
             print('\n', playlistTitle, '\n')
-            if question.lower() == 'd':
+            
+            count = 1
+            for video in p.videos:
+                masterAudioFilePath = os.path.join(outputPath, playlistTitle)
+                print(count, '/', len(p), ': Downloading', video.title)
                 
-                count = 1
-                for video in p.videos:
-                    masterAudioFilePath = os.path.join(outputPath, playlistTitle)
-                    print(count, '/', len(p), ': Downloading', video.title)
+                try:
+                    audioFile = video.streams.filter(only_audio=True).first()
                     
-                    try:
-                        audioFile = video.streams.filter(only_audio=True).first()
+                    # Creates the master file 
+                    if count == 1:
+                        downloadAudioFile(audioFile, outputPath, playlistTitle)
+                        print("Master audio file created successfully.\n")
                         
-                        # Creates the master file 
-                        if count == 1:
-                            downloadAudioFile(audioFile, outputPath, playlistTitle)
-                            print("Master audio file created successfully.\n")
+                    # Adds to the master file
+                    else:
+                        addonFileName = 'addon.mp3'
+                        addonFilePath = os.path.join(outputPath, addonFileName)
+                        downloadAudioFile(audioFile, outputPath, addonFileName)
+                        
+                        mergedFile = mergeAudioFiles(masterAudioFilePath, addonFilePath, outputPath)   
+                                    
+                        # Replaces the outdated master file with the new master file, and deletes the no-longer-needed addon file
+                        os.replace(mergedFile, masterAudioFilePath)
+                        os.remove(addonFilePath)
+                        
                             
-                        # Adds to the master file
-                        else:
-                            addonFileName = 'addon.mp3'
-                            addonFilePath = os.path.join(outputPath, addonFileName)
-                            downloadAudioFile(audioFile, outputPath, addonFileName)
-                            
-                            mergedFile = mergeAudioFiles(masterAudioFilePath, addonFilePath, outputPath)   
-                                        
-                            # Replaces the outdated master file with the new master file, and deletes the no-longer-needed addon file
-                            os.replace(mergedFile, masterAudioFilePath)
-                            os.remove(addonFilePath)
-                            
-                            
-                    except pytube.exceptions.AgeRestrictedError as e:
-                        print('Skipping', video.title, 'due to error: \"', e, '\" \n')
-                    
-                    count += 1
-                    
+                except pytube.exceptions.AgeRestrictedError as e:
+                    print('Skipping', video.title, 'due to error: \"', e, '\" \n')
+                
+                count += 1
+                
                 
             print('All files successfully downloaded and merged!\n')
 
