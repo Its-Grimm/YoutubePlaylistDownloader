@@ -1,8 +1,8 @@
 import os
 import pytube
 import subprocess
-from pytube import Playlist
 import pytube.exceptions
+from pytube import Playlist
 
 def downloadAudioFile(audioFile, outputPath, fileName):
     audioFile.download(output_path=outputPath, filename=fileName)
@@ -22,68 +22,74 @@ def mergeAudioFiles(fullAudioFile, addOnAudio, outputPath):
         return fullAudioFile
 
 
-def main(): 
-    link = input('Enter the Youtube playlist you wish to download: ')
-    if 'playlist' not in link:
-        print('Only enter Youtube playlists, not regular videos or non-Youtube links! Try again!')
-    else:
-        downloadOrMerge = input('Do you want to download or download and merge? [d/DM] ')
-        if downloadOrMerge.lower() not in ('d', 'dm'):
-            print('Response not proper. Please try again!')             
-        else:
-            p = Playlist(link)
-            outputPath = 'DownloadedMusic'
-            os.makedirs(outputPath, exist_ok=True)
-            
-            playlistTitle = str(p.title).replace(' ', '').replace('\'', '').replace('/', '')
-            if downloadOrMerge.lower() == 'd':
-                print('Downloading all files!')
-            else:
-                print('Downloading and merging all files!')
-                playlistTitle = playlistTitle + '.mp3'
+def getUserInput(prompt, valid_responses=None):
+    while True:
+        response = input(prompt).strip()
+        if valid_responses is None or response.lower() in valid_responses:
+            return response
+        
+        print('Invalid response, please try again.')
 
-            print('\n', playlistTitle, '\n')
-            
-            count = 1
-            for video in p.videos:
-                print(count, '/', len(p), ': Downloading', video.title)
+
+def main(): 
+    link = getUserInput('Enter the Youtube playlist you wish to download: ')
+    if 'playlist?' not in link:
+        print('Only enter Youtube playlists, not regular videos or non-Youtube links! Try again!')
+        return
+    
+    p = Playlist(link)
+    outputPath = 'DownloadedMusic'
+    os.makedirs(outputPath, exist_ok=True)
+    
+    downloadOrMerge = getUserInput(prompt='Do you want to download or download and merge? [d/DM] ', valid_responses=['d', 'dm']).lower()
+    playlistTitle = str(p.title).replace(' ', '').replace('\'', '').replace('/', '')
+    if downloadOrMerge == 'dm':
+        playlistTitle += '.mp3'
+
+    print('Downloading all files!' if downloadOrMerge == 'd' else 'Downloading and merging all files!')
+    print('\n', playlistTitle, '\n')
+    
+    count = 1
+    for video in p.videos:
+        # print(count, '/', len(p), ': Downloading', video.title)
+        print(f'{count}/{len(p)}: Downloading {video.title}')
+        
+        try:
+            audioFile = video.streams.filter(only_audio=True).first()
+            if downloadOrMerge.lower() == 'd':
+                songOutputFolder = os.path.join(outputPath, playlistTitle)
+                songName = f'{video.title}.mp3'
+                os.makedirs(songOutputFolder, exist_ok=True)
+                # Will simply overwrite song file if already exists/downloaded
+                downloadAudioFile(audioFile, songOutputFolder, songName)
+                    
+            else:
+                # Creates the master file only when downloading first track
+                if count == 1:
+                    downloadAudioFile(audioFile, outputPath, playlistTitle)
+                    print("Master audio file created successfully.\n")
                 
-                try:
-                    audioFile = video.streams.filter(only_audio=True).first()
-                    if downloadOrMerge.lower() == 'd':
-                        songsOutput = os.path.join(outputPath, playlistTitle)
-                        songName = video.title + '.mp3'
-                        os.makedirs(songsOutput, exist_ok=True)
-                        # Will simply overwrite song file if already exists/downloaded
-                        downloadAudioFile(audioFile, songsOutput, songName)
-                            
-                    else:
-                        # Creates the master file only when downloading first track
-                        if count == 1:
-                            downloadAudioFile(audioFile, outputPath, playlistTitle)
-                            print("Master audio file created successfully.\n")
-                        
-                        # Adds each song to the master file
-                        else:
-                            addonFileName = 'addon.mp3'
-                            addonFilePath = os.path.join(outputPath, addonFileName)
-                            masterAudioFilePath = os.path.join(outputPath, playlistTitle)
-                            
-                            downloadAudioFile(audioFile, outputPath, addonFileName)
-                            mergedFile = mergeAudioFiles(masterAudioFilePath, addonFilePath, outputPath)   
-                                        
-                            # Replaces the outdated master file with the new master file, and deletes the no-longer-needed addon file
-                            os.replace(mergedFile, masterAudioFilePath)
-                            os.remove(addonFilePath)
-                        
-                            
-                except pytube.exceptions.AgeRestrictedError as e:
-                    print('Skipping', video.title, 'due to error: \"', e, '\" \n')
+                # Adds each song to the master file
+                else:
+                    addonFileName = 'addon.mp3'
+                    addonFilePath = os.path.join(outputPath, addonFileName)
+                    masterAudioFilePath = os.path.join(outputPath, playlistTitle)
+                    
+                    downloadAudioFile(audioFile, outputPath, addonFileName)
+                    mergedFile = mergeAudioFiles(masterAudioFilePath, addonFilePath, outputPath)   
+                                
+                    # Replaces the outdated master file with the new master file, and deletes the no-longer-needed addon file
+                    os.replace(mergedFile, masterAudioFilePath)
+                    os.remove(addonFilePath)
                 
-                count += 1
-                
-                
-            print('\nAll files successfully downloaded and/or downloaded and merged!\n')
+                    
+        except pytube.exceptions.AgeRestrictedError as e:
+            print(f'Skipping {video.title} due to age restriction: "{e}"\n')
+        
+        count += 1
+        
+    # print('\nDownloading all files!' if downloadOrMerge == 'd' else 'Downloading and merging all files!')
+    print('\nAll files successfully downloaded!\n' if downloadOrMerge == 'd' else '\nAll files successfully downloaded and merged!\n')
 
 if __name__ == '__main__': 
     main()  
